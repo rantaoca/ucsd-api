@@ -4,9 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node ./course-parser-test.js"
+    "test": "node ./test/main-test.js"
   },
-  "author": "",
+  "contributers": [
+    {
+      "name": "Ran Tao",
+      "email": "rantaoca@gmail.com"
+    }
+  ],
   "license": "ISC",
   "dependencies": {
     "cheerio": "^0.18.0",
