@@ -1,0 +1,16 @@
+{
+  "name": "CourseAPI",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ./course-parser-test.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^0.18.0",
+    "express": "^4.12.2",
+    "request": "^2.53.0"
+  }
+}
