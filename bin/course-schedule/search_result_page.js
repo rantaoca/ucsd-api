@@ -3,7 +3,7 @@ var cheerio = require('cheerio');
 /**
  * Parse the html returned by a Schedule of Classes search.
  * @param {string} html the html of the search result page.
- * @returns {Array.<Class>} classes in the page, or null if an error is found.
+ * @return {Array.<Class>} classes in the page, or null if an error is found.
  */
 function SearchResultPage(html) {
   this._TABLE_SELECTOR = '.tbrdr';
@@ -45,9 +45,15 @@ SearchResultPage.prototype._parsePagesData = function() {
  * Parse each row iteratively. The table is formatted in a tree-like
  * data structure, so a stack will be used to keep track of which layer
  * of the tree it's on.
- * There are a finite number row types in this table:
- * 1.
  *
+ * There are different types of rows that make up each depth of the tree:
+ *  [Department Description]?
+ *  Department Result Header
+ *  Course Column Header
+ *    [Section Header]+
+ *      [LE | DI | FI]*
+ *    [Section Note Header]?
+ *      Section Note
  */
 SearchResultPage.prototype._parseScheduleTable = function() {
   var $ = this.$;
@@ -55,7 +61,16 @@ SearchResultPage.prototype._parseScheduleTable = function() {
 
   var stack = [];
   for (var i = 0; i < rows.length; i++) {
-
+    row = new RowParser(rows[i]);
+    switch (row.type) {
+      case "Department Description":
+      case "Department Result Header":
+      case "Course Column Header":
+      case "Section Header":
+      case "Section":
+      case "Section Note Header":
+      case "Section Note"
+    }
   }
   this.courseList = [rows.length];
 }

@@ -85,7 +85,7 @@ CourseScheduleSearcher.prototype.getPage = function(pageNum, callback) {
 
 /**
  * Generate the post functions for the parallel call to get all the pages.
- * @returns {function(PageCallback)}
+ * @return {function(PageCallback)} a custom function to be used in async.
  */
 CourseScheduleSearcher.prototype.generatePostFunction = function(pageNum) {
   return (function(callback) {
