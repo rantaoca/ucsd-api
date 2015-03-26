@@ -1,1 +1,1 @@
-console.log("No tests implemented yet!");
+require('./course-schedule');
