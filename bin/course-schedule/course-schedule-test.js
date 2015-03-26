@@ -1,7 +1,7 @@
-var ClassScheduleSearcher = require('./class_schedule_searcher.js');
+var CourseScheduleSearcher = require('./course_schedule_searcher.js');
 
 var courses = ['cse 100-150'];
-searcher = new ClassScheduleSearcher();
+searcher = new CourseScheduleSearcher();
 
 searcher.search(courses, function (err, data) {
   if (err) {

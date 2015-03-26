@@ -4,17 +4,17 @@ var request = require('request');
 var SearchResultPage = require('./search_result_page.js');
 
 // Template JSON of the post data.
-var DATA_TEMPLATE = require('./class-schedule-data.json');
+var DATA_TEMPLATE = require('./course-schedule-data.json');
 
 
-function ClassScheduleSearcher() {}
+function CourseScheduleSearcher() {}
 
 /**
  * Performs a search on the 'Schedule of Classes' page.
- * @param {string[]} classes List of class names to be searched.
+ * @param {string[]} query List of course names to be searched.
  * @param {function(Error, Course[])} callback
  */
-ClassScheduleSearcher.prototype.search = function(query, callback) {
+CourseScheduleSearcher.prototype.search = function(query, callback) {
   this.query = query;
 
   this.getPage(1, (function(err, page) {
@@ -31,15 +31,15 @@ ClassScheduleSearcher.prototype.search = function(query, callback) {
       async.parallel(functionList, function combineResults(err, results) {
         if (err) callback(err);
 
-        var combinedClassList = page.classList
+        var combinedCourseList = page.courseList
         for (var i = 0; i < results.length; i++) {
-          combinedClassList = combinedClassList.concat(results[i].classList);
+          combinedCourseList = combinedCourseList.concat(results[i].courseList);
         }
 
-        callback(null, combinedClassList);
+        callback(null, combinedCourseList);
       });
     } else {
-      callback(null, page.classList);
+      callback(null, page.courseList);
     }
   }).bind(this));
 }
@@ -50,7 +50,7 @@ ClassScheduleSearcher.prototype.search = function(query, callback) {
  * @param {int} pageNum
  * @param {function(Error, SearchResultPage)} callback
  */
-ClassScheduleSearcher.prototype.getPage = function(pageNum, callback) {
+CourseScheduleSearcher.prototype.getPage = function(pageNum, callback) {
   var formUrl = "https://act.ucsd.edu/scheduleOfClasses/" +
     "scheduleOfClassesStudentResult.htm?page=" + pageNum;
 
@@ -87,10 +87,10 @@ ClassScheduleSearcher.prototype.getPage = function(pageNum, callback) {
  * Generate the post functions for the parallel call to get all the pages.
  * @returns {function(PageCallback)}
  */
-ClassScheduleSearcher.prototype.generatePostFunction = function(pageNum) {
+CourseScheduleSearcher.prototype.generatePostFunction = function(pageNum) {
   return (function(callback) {
     this.getPage(pageNum, callback);
   }).bind(this);
 }
 
-module.exports = ClassScheduleSearcher;
+module.exports = CourseScheduleSearcher;

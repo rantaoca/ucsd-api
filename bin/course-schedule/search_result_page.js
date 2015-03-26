@@ -57,7 +57,7 @@ SearchResultPage.prototype._parseScheduleTable = function() {
   for (var i = 0; i < rows.length; i++) {
 
   }
-  this.classList = [rows.length];
+  this.courseList = [rows.length];
 }
 
 module.exports = SearchResultPage;
