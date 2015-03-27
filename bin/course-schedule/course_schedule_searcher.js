@@ -21,9 +21,9 @@ CourseScheduleSearcher.prototype.search = function(query, callback) {
     if (err) return callback(err);
 
     // Get the rest of the pages if there are more.
-    if (page.numPages > 1) {
+    if (page.getNumPages() > 1) {
       var functionList = [];
-      for (var pageNum = 2; pageNum <= page.numPages; pageNum++) {
+      for (var pageNum = 2; pageNum <= page.getNumPages(); pageNum++) {
         functionList.push(this.generatePostFunction(pageNum));
       }
 
@@ -31,15 +31,15 @@ CourseScheduleSearcher.prototype.search = function(query, callback) {
       async.parallel(functionList, function combineResults(err, results) {
         if (err) callback(err);
 
-        var combinedCourseList = page.courseList
+        var combinedList = page.getCourseList();
         for (var i = 0; i < results.length; i++) {
-          combinedCourseList = combinedCourseList.concat(results[i].courseList);
+          combinedList = combinedList.concat(results[i].getCourseList());
         }
 
-        callback(null, combinedCourseList);
+        callback(null, combinedList);
       });
     } else {
-      callback(null, page.courseList);
+      callback(null, page.getCourseList());
     }
   }).bind(this));
 }
@@ -75,7 +75,7 @@ CourseScheduleSearcher.prototype.getPage = function(pageNum, callback) {
 
     page = new SearchResultPage(body);
     // If there are no pages, there was an error with the search input.
-    if (page.numPages == 0) {
+    if (page.getNumPages() == 0) {
       callback(new Error("The search was formatted incorrectly."));
     } else {
       callback(null, page);
