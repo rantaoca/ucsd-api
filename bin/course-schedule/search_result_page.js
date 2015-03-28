@@ -93,25 +93,36 @@ SearchResultPage.prototype._parseScheduleTable = function() {
   var rows = $(this._TABLE_ROW_SELECTOR);
 
   var stack = [];
+  var prevRowType = null;
   for (var i = 0; i < rows.length; i++) {
-    row = new RowParser($(rows[i]));
+    row = new RowParser($(rows[i]), prevRowType);
 
     console.log(row.rowType);
     switch (row.rowType) {
       case "Department Description":
+        // Ignore for now
         break;
 
       case "Department Header":
-        console.log(row.departmentCode);
+        console.log("Department Code: " + row.departmentCode);
         break;
 
-      case "Course Column Header":
+      case "Course Column Header 1":
+        // Ignore for now
+        break;
+
+      case "Course Column Header 2":
+        // Ignore for now
+        break;
+
       case "Section Header":
       case "Section":
       case "Section Note Header":
       case "Section Note":
       case "Invalid Row":
     }
+
+    prevRowType = row.rowType;
   }
   this._courseList = [rows.length];
 }
@@ -120,8 +131,9 @@ SearchResultPage.prototype._parseScheduleTable = function() {
  * [RowParser description]
  * @param {} row [description]
  */
-function RowParser(row) {
+function RowParser(row, prevRowType) {
   this.row = row;
+  this.prevRowType = prevRowType;
   this.rowType = null;
 
   // rowType = "Department Description"
@@ -141,6 +153,12 @@ function RowParser(row) {
  * at the bottom.
  *
  * Department Header - These rows have a header text and a bottom timestamp.
+ *
+ * Course Column Header 1 - Row with the header for each column. Always appears
+ * after the Department Header, and should contain 11 td's.
+ *
+ * Course Column Header 2 - Part 2 of the headers for each column. Always
+ * appears after the part 1, and should contain 2 td's.
  */
 RowParser.prototype._parseType = function() {
 
@@ -160,13 +178,39 @@ RowParser.prototype._parseType = function() {
     // If there isn't a department code, then it must be a department header.
     if (departmentCodeResult == null) {
       this.rowType = "Department Description"
+      return;
 
     } else if (departmentCodeResult[1] != null) {
       this.rowType = "Department Header";
       this.departmentCode = departmentCodeResult[1];
+      return;
     }
 
   } else if (h2.length == 0) {
+    // Check to see if it's the course column header 1.
+    if (this.prevRowType == "Department Header") {
+      // Verify.
+      if (this.row.children('td').length == 11) {
+        this.rowType = "Course Column Header 1";
+        return;
+
+      } else {
+        console.log('Something went wrong, perhaps the page format changed.');
+        return;
+      }
+    }
+
+    if (this.prevRowType == "Course Column Header 1") {
+      // Verify.
+      if (this.row.children('td').length == 2) {
+        this.rowType = "Course Column Header 2";
+        return;
+
+      } else {
+        console.log('Something went wrong, perhaps the page format changed.');
+        return;
+      }
+    }
 
 
   }
