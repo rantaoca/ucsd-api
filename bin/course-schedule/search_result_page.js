@@ -1,10 +1,12 @@
 var cheerio = require('cheerio');
+var Course = require('./course.js');
 
 /**
  * @constructor
  * @param {string} html the html of the search result page.
  */
-function SearchResultPage(html) {
+function SearchResultPage(html, postData) {
+  this.postData = postData;
   this._TABLE_SELECTOR = '.tbrdr';
   this._TABLE_ROW_SELECTOR = '.tbrdr tr';
   this._PAGE_DATA_SELECTOR = 'table>tbody>tr>td:last-child';
@@ -87,15 +89,18 @@ SearchResultPage.prototype._parsePagesData = function() {
  *      [LE | DI | FI]*
  *    [Section Note Header]?
  *      Section Note
+ *
+ * TODO: Better error handling.
  */
 SearchResultPage.prototype._parseScheduleTable = function() {
   var $ = this.$;
   var rows = $(this._TABLE_ROW_SELECTOR);
 
-  var stack = [];
+  var curDepartment = null;
+  var courseList = [];
   var prevRowType = null;
   for (var i = 0; i < rows.length; i++) {
-    row = new RowParser($(rows[i]), prevRowType);
+    row = new RowParser($, rows[i], prevRowType);
 
     console.log(row.rowType);
     switch (row.rowType) {
@@ -104,7 +109,7 @@ SearchResultPage.prototype._parseScheduleTable = function() {
         break;
 
       case "Department Header":
-        console.log("Department Code: " + row.departmentCode);
+        curDepartment = row.departmentCode;
         break;
 
       case "Course Column Header 1":
@@ -115,31 +120,55 @@ SearchResultPage.prototype._parseScheduleTable = function() {
         // Ignore for now
         break;
 
-      case "Section Header":
+      case "Course Header":
+        // Validity Check
+        courseList[courseList.length] = new Course(
+          'SP15',
+          curDepartment,
+          row.courseNumber,
+          row.units,
+          row.restrictionCode
+        );
+        break;
+
       case "Section":
-      case "Section Note Header":
-      case "Section Note":
+        courseList[courseList.length - 1].addSection(
+          row.sectionId,
+          row.meetingType,
+          row.sectionLetter,
+          row.sectionNumber
+        );
+
+        break;
+
+      case "Course Note Header":
+      case "Course Note":
       case "Invalid Row":
     }
 
     prevRowType = row.rowType;
   }
-  this._courseList = [rows.length];
+  this._courseList = courseList;
 }
 
 /**
  * [RowParser description]
  * @param {} row [description]
  */
-function RowParser(row, prevRowType) {
-  this.row = row;
+function RowParser($, row, prevRowType) {
+  this.$ = $;
+  this.row = $(row);
   this.prevRowType = prevRowType;
   this.rowType = null;
 
-  // rowType = "Department Description"
-
   // rowType = "Department Header"
   this.departmentCode = null;
+
+  // rowType = "Course Header"
+  this.courseNumber = null;
+  this.units = null;
+  this.courseName = null;
+  this.restrictionCode = null;
 
   this._parseType();
 }
@@ -159,8 +188,19 @@ function RowParser(row, prevRowType) {
  *
  * Course Column Header 2 - Part 2 of the headers for each column. Always
  * appears after the part 1, and should contain 2 td's.
+ *
+ * Course Header - Purple row that describes the course, lists many sections.
+ * Has 4 td's with ".crsheader" class.
+ * Contains a restriction code, found at:
+ * http://registrar.ucsd.edu/StudentLink/rstr_codes.html
+ * Also contains the course number
+ *
+ * Course Note Header - Same purple row, but only has 3 "td.crsheader".
+ *
+ * Course Note - Previous row is course note header.
  */
 RowParser.prototype._parseType = function() {
+  var $ = this.$;
 
   // Check for department description and department header.
   var h2 = this.row.find('h2');
@@ -212,11 +252,64 @@ RowParser.prototype._parseType = function() {
       }
     }
 
+    // Check if it's a course header row.
+    courseHeaderColumns = this.row.children('.crsheader');
+    if (courseHeaderColumns.length == 4) {
+      this.rowType = "Course Header";
+      this.restrictionCode = removeSpacing($(courseHeaderColumns[0]).text());
+      this.courseNumber = removeSpacing($(courseHeaderColumns[1]).text());
+
+      // Parse course name and units from text.
+      // Text looks something like:
+      // "    Computer Organiz&Systms Progrm ( 4 Units)  "
+      var COURSE_TITLE_REGEX = /\s*(.+?)\s*\(\s*(\d+)\s*[Uu]nits?\s*\)/
+      var text = $(courseHeaderColumns[2]).text();
+      var result = COURSE_TITLE_REGEX.exec(text);
+
+      if (result != null && result.length == 3) {
+        this.courseName = result[1];
+        this.units = parseInt(result[2]);
+      } else {
+        console.log('Something went wrong, perhaps the page format changed.');
+      }
+    }
+
+    // Check if it's a section. If it doesn't have 13 columns, then it might
+    // be a cancelled section.
+    if (this.row.hasClass('sectxt') && this.row.children('.brdr').length == 13) {
+      this.rowType = "Section";
+
+      var cols = this.row.children('.brdr');
+      this.sectionId = removeSpacing($(cols[2]).text());
+      this.meetingType = removeSpacing($(cols[3]).text());
+
+      var sectionText = removeSpacing($(cols[4]).text());
+      this.sectionLetter = sectionText[0];
+      this.sectionNumber = parseInt(sectionText.slice(1,3));
+    }
+
+
+    // Check if it's a coures note header row.
+    if (courseHeaderColumns.length == 3) {
+      this.rowType = "Course Note Header";
+      return;
+    }
+
+    // Check if it's a course note.
+    if (this.prevRowType = "Course Note Header"
+        && this.row.children('.nonenrtxt').length == 2) {
+      this.rowType = "Course Note";
+      return;
+    }
 
   }
 }
 
-
+function removeSpacing(text) {
+  var re = /^\s*(.*?)\s*$/;
+  var result = re.exec(text);
+  return result != null && result.length == 2 ? result[1] : "";
+}
 
 
 
