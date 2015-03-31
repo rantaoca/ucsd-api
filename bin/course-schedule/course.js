@@ -1,17 +1,18 @@
 function Course(term, departmentCode, courseNumber, units, restrictionCode) {
-    this.term = term;
     this.departmentCode = departmentCode;
     this.courseNumber = courseNumber;
+    this.term = term;
     this.units = units;
     this.restrictionCode = restrictionCode;
 
     this.sectionList = [];
 }
 
-Course.prototype.addSection = function(sectionId, meetingType, sectionLetter,
-    sectionNumber) {
-    this.sectionList[this.sectionList.length] = new Section(sectionId,
-        meetingType, sectionLetter, sectionNumber);
+Course.prototype.addSection = function(sectionId, meetingType, sectionLetter, sectionNumber,
+        days, time, place, instructor, availability, limit) {
+
+    this.sectionList[this.sectionList.length] = new Section(sectionId, meetingType, sectionLetter, sectionNumber,
+            days, time, place, instructor, availability, limit);
 }
 
 // Course.prototype.toJSON = function() {
@@ -30,21 +31,23 @@ Course.prototype.addSection = function(sectionId, meetingType, sectionLetter,
 //         "sectionList:" + sectionListJSON + "\n}";
 // }
 
-function Section(sectionId, meetingType, sectionLetter, sectionNumber) {
-    this.sectionId = sectionId;
+function Section(sectionId, meetingType, sectionLetter, sectionNumber,
+    days, time, place, instructor, availability, limit) {
     this.meetingType = meetingType;
     this.sectionLetter = sectionLetter;
     this.sectionNumber = sectionNumber;
 
-    // this.days = null;
-    // this.time = null;
-    // this.place = null;
-    // this.instructor = null;
+    this.days = days;
+    this.time = time;
+    this.place = place;
+    this.instructor = instructor;
+    this.sectionId = sectionId;
 
-    // // Availability can be "Unlim" or "FULL waitlist(29)" or "29"
-    // this.availability = null;
-    // // Limit can be nothing if availability is "Unlim"
-    // this.limit = null;
+    // Availability can be "Unlim" or "FULL waitlist(29)" or "29"
+    // Waitlist is represented as negative availability.
+    this.availability = availability;
+    // Limit can be nothing if availability is "Unlim"
+    this.limit = limit;
 }
 
 // Section.prototype.toJSON = function() {

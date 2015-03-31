@@ -7,15 +7,18 @@ var SearchResultPage = require('./search_result_page.js');
 var DATA_TEMPLATE = require('./course-schedule-data.json');
 
 
-function CourseScheduleSearcher() {}
+function CourseScheduleSearcher() {
+  // Make a deep copy of data template, as hacky as this seems, it is the
+  // fastest method according to stack overflow analysis.
+  this.query = JSON.parse(JSON.stringify(DATA_TEMPLATE));
+}
 
 /**
  * Performs a search on the 'Schedule of Classes' page.
  * @param {string[]} query List of course names to be searched.
  * @param {function(Error, Course[])} callback
  */
-CourseScheduleSearcher.prototype.search = function(query, callback) {
-  this.query = query;
+CourseScheduleSearcher.prototype.search = function(callback) {
 
   this.getPage(1, (function(err, page) {
     if (err) return callback(err);
@@ -54,13 +57,7 @@ CourseScheduleSearcher.prototype.getPage = function(pageNum, callback) {
   var formUrl = "https://act.ucsd.edu/scheduleOfClasses/" +
     "scheduleOfClassesStudentResult.htm?page=" + pageNum;
 
-  // Make a deep copy of data template, as hacky as this seems, it is the
-  // fastest method according to stack overflow analysis.
-  postData = JSON.parse(JSON.stringify(DATA_TEMPLATE));
-
-  postData["courses"] = this.query;
-
-  var postQuery = querystring.stringify(postData);
+  var postQuery = querystring.stringify(this.query);
 
   var postOptions = {
     url: formUrl,
@@ -68,19 +65,19 @@ CourseScheduleSearcher.prototype.getPage = function(pageNum, callback) {
   };
 
   // Send a post to the Schedule of Classes page.
-  request.post(postOptions, function (err, response, body) {
+  request.post(postOptions, (function (err, response, body) {
     if (err) {
       return callback(err);
     }
 
-    page = new SearchResultPage(body);
+    page = new SearchResultPage(body, this.query);
     // If there are no pages, there was an error with the search input.
     if (page.getNumPages() == 0) {
       callback(new Error("The search was formatted incorrectly."));
     } else {
       callback(null, page);
     }
-  });
+  }).bind(this));
 }
 
 /**

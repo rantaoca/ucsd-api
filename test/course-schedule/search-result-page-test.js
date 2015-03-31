@@ -11,5 +11,5 @@ var courseList = page.getCourseList();
 
 for (var i = 0; i < courseList.length; i++) {
     var sectionList = courseList[i].sectionList;
-    console.log(JSON.stringify(courseList[i]));
+    console.log(courseList[i]);
 }

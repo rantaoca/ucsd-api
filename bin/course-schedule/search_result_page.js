@@ -102,7 +102,6 @@ SearchResultPage.prototype._parseScheduleTable = function() {
   for (var i = 0; i < rows.length; i++) {
     row = new RowParser($, rows[i], prevRowType);
 
-    console.log(row.rowType);
     switch (row.rowType) {
       case "Department Description":
         // Ignore for now
@@ -123,7 +122,7 @@ SearchResultPage.prototype._parseScheduleTable = function() {
       case "Course Header":
         // Validity Check
         courseList[courseList.length] = new Course(
-          'SP15',
+          this.postData.selectedTerm,
           curDepartment,
           row.courseNumber,
           row.units,
@@ -136,9 +135,14 @@ SearchResultPage.prototype._parseScheduleTable = function() {
           row.sectionId,
           row.meetingType,
           row.sectionLetter,
-          row.sectionNumber
+          row.sectionNumber,
+          row.days,
+          row.time,
+          row.place,
+          row.instructor,
+          row.availability,
+          row.limit
         );
-
         break;
 
       case "Course Note Header":
@@ -170,6 +174,18 @@ function RowParser($, row, prevRowType) {
   this.courseName = null;
   this.restrictionCode = null;
 
+  // rowType = "Section"
+  this.sectionId = null;
+  this.meetingType = null;
+  this.sectionLetter = null;
+  this.sectionNumber = null;
+  this.days = null;
+  this.time = null;
+  this.place = null;
+  this.instructor = null;
+  this.availability = null;
+  this.limit = null;
+
   this._parseType();
 }
 
@@ -198,6 +214,18 @@ function RowParser($, row, prevRowType) {
  * Course Note Header - Same purple row, but only has 3 "td.crsheader".
  *
  * Course Note - Previous row is course note header.
+ *
+ * Section - Has class of sectxt and 13 columns of .brdr
+ * col[2] - section id
+ * col[3] - meeting type
+ * col[4] - section letter and number (e.g. A00)
+ * col[5] - days
+ * col[6] - time
+ * col[7] - building name
+ * col[8] - building number (can include letters!)
+ * col[9] - instructor
+ * col[10] - availability (can be "Unlim" or "FULL waitlist(\d*)")
+ * col[11] - limit
  */
 RowParser.prototype._parseType = function() {
   var $ = this.$;
@@ -286,6 +314,38 @@ RowParser.prototype._parseType = function() {
       var sectionText = removeSpacing($(cols[4]).text());
       this.sectionLetter = sectionText[0];
       this.sectionNumber = parseInt(sectionText.slice(1,3));
+
+      this.days = removeSpacing($(cols[5]).text());
+      this.time = removeSpacing($(cols[6]).text());
+
+      var building = removeSpacing($(cols[7]).text());
+      var buildingNumber = removeSpacing($(cols[8]).text());
+      this.place = building + " " + buildingNumber;
+
+      this.instructor = removeSpacing($(cols[9]).text());
+
+      var availabilityText = removeSpacing($(cols[10]).text());
+      var isUnlim = /unlim/i.exec(availabilityText) != null;
+      var isFull = /full/i.exec(availabilityText) != null;
+      var numberResult = /\d+/.exec(availabilityText);
+      var number = numberResult != null ? parseInt(numberResult[0]) : "error: " + availabilityText;
+      if (availabilityText == "") {
+        this.availability = "";
+      } else if (isUnlim) {
+        this.availability = "Unlim";
+      } else {
+        this.availability = isFull ? -number : number;
+        if (this.availability == -0) {
+          this.availability = 0;
+        }
+      }
+
+      var limitText = removeSpacing($(cols[11]).text());
+      if (limitText == "") {
+        this.limit = "";
+      } else {
+        this.limit = parseInt(limitText);
+      }
     }
 
 
@@ -306,7 +366,7 @@ RowParser.prototype._parseType = function() {
 }
 
 function removeSpacing(text) {
-  var re = /^\s*(.*?)\s*$/;
+  var re = /^\s*([^]*?)\s*$/;
   var result = re.exec(text);
   return result != null && result.length == 2 ? result[1] : "";
 }
