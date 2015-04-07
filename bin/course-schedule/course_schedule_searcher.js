@@ -5,6 +5,7 @@ var SearchResultPage = require('./search_result_page.js');
 
 // Template JSON of the post data.
 var DATA_TEMPLATE = require('./course-schedule-data.json');
+var DEPARTMENT_CODES = require('./department-codes.json');
 
 
 function CourseScheduleSearcher() {
@@ -23,6 +24,7 @@ CourseScheduleSearcher.prototype.search = function(callback) {
   this.getPage(1, (function(err, page) {
     if (err) return callback(err);
 
+    console.log("There are " + page.getNumPages() + " total page(s).");
     // Get the rest of the pages if there are more.
     if (page.getNumPages() > 1) {
       var functionList = [];
@@ -47,6 +49,11 @@ CourseScheduleSearcher.prototype.search = function(callback) {
   }).bind(this));
 }
 
+CourseScheduleSearcher.prototype.searchAll = function(callback) {
+  this.query.selectedSubjects = DEPARTMENT_CODES;
+  this.query.tabNum = "";
+  this.search(callback);
+}
 
 /**
  * Make a post to get the results page.
@@ -67,8 +74,11 @@ CourseScheduleSearcher.prototype.getPage = function(pageNum, callback) {
   // Send a post to the Schedule of Classes page.
   request.post(postOptions, (function (err, response, body) {
     if (err) {
+      console.log("Error with page " + pageNum + ":" + err.message);
       return callback(err);
     }
+
+    console.log("Received page " + pageNum + ".");
 
     page = new SearchResultPage(body, this.query);
     // If there are no pages, there was an error with the search input.

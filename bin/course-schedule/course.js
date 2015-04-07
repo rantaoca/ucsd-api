@@ -1,9 +1,9 @@
-function Course(term, departmentCode, courseNumber, units, restrictionCode) {
+function Course(term, departmentCode, courseNumber, units, restrictionCodes) {
     this.departmentCode = departmentCode;
     this.courseNumber = courseNumber;
     this.term = term;
     this.units = units;
-    this.restrictionCode = restrictionCode;
+    this.restrictionCodes = restrictionCodes;
 
     this.sectionList = [];
 }
@@ -14,22 +14,6 @@ Course.prototype.addSection = function(sectionId, meetingType, sectionLetter, se
     this.sectionList[this.sectionList.length] = new Section(sectionId, meetingType, sectionLetter, sectionNumber,
             days, time, place, instructor, availability, limit);
 }
-
-// Course.prototype.toJSON = function() {
-//     var sectionListJSON = this.sectionList.length > 0 ? "\n[" : "[";
-
-//     for (var i = 0; i < this.sectionList.length; i++) {
-//         sectionListJSON += sectionList[i].toJSON() + ",\n";
-//     }
-//     sectionListJSON += "]";
-
-//     return "{ term: " + this.term + ",\n" +
-//         "departmentCode: " + this.departmentCode + ",\n" +
-//         "courseNumber: " + this.courseNumber + ",\n" +
-//         "units: " + this.units + ",\n" +
-//         "restrictionCode" + this.restrictionCode + ",\n" +
-//         "sectionList:" + sectionListJSON + "\n}";
-// }
 
 function Section(sectionId, meetingType, sectionLetter, sectionNumber) {
     this.sectionId = null;
@@ -48,12 +32,5 @@ function Section(sectionId, meetingType, sectionLetter, sectionNumber) {
     // Limit can be nothing if availability is "Unlim"
     this.limit = null;
 }
-
-// Section.prototype.toJSON = function() {
-//     return "{ sectionId: " + this.sectionId + ",\n" +
-//         "meetingType: " + this.meetingType + ",\n" +
-//         "sectionLetter: " + this.sectionLetter + ",\n" +
-//         "sectionNumber: " + this.sectionNumber + "\n}";
-// }
 
 module.exports = Course;

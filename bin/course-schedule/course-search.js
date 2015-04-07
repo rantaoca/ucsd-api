@@ -7,16 +7,33 @@ var CourseScheduleSearcher = require('./course_schedule_searcher.js');
  * @param  {Function} callback
  */
 function search(options, callback) {
-  searcher = new CourseScheduleSearcher();
+  var searcher = new CourseScheduleSearcher();
 
   searcher.query.courses = options.courses;
 
-  searcher.search(function (err, data) {
+  searchCallback = function (err, data) {
     if (err) {
       return callback(err);
     }
     callback(null, data);
-  });
+  }
+
+  if (isTrue(options.all)) {
+    searcher.searchAll(searchCallback);
+  } else {
+    searcher.search(searchCallback);
+  }
+}
+
+function isTrue(val) {
+    if (typeof val === 'undefined') {
+        return false;
+    }
+    if (val == 1 || val == '1' || val == 'true' || val == true) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 module.exports = search;

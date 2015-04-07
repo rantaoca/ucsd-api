@@ -63,7 +63,7 @@ SearchResultPage.prototype._parsePagesData = function() {
   }
 
   // Get the page number by regex. Looks like: Page (1 of 1)
-  var pageDataRegex = /[Pp]age\s*\(\s*(\d)\s*of\s*(\d)/;
+  var pageDataRegex = /[Pp]age\s*\(\s*(\d*)\s*of\s*(\d*)/;
 
   var pageDataString = $(this._TABLE_SELECTOR).prevAll('div').first()
     .find(this._PAGE_DATA_SELECTOR).text();
@@ -100,7 +100,7 @@ SearchResultPage.prototype._parseScheduleTable = function() {
   var courseList = [];
   var prevRowType = null;
   for (var i = 0; i < rows.length; i++) {
-    row = new RowParser($, rows[i], prevRowType);
+    row = new RowParser(this, $, rows[i], prevRowType);
 
     switch (row.rowType) {
       case "Department Description":
@@ -125,27 +125,27 @@ SearchResultPage.prototype._parseScheduleTable = function() {
           this.postData.selectedTerm,
           curDepartment,
           row.courseNumber,
-          validate(row.units),
-          validate(row.restrictionCode)
+          compact(row.units),
+          compact(row.restrictionCodes)
         );
         break;
 
       case "Section":
-        currentCourse = courseList[courseList.length - 1];
+        var currentCourse = courseList[courseList.length - 1];
         currentCourse.addSection(
           row.sectionId,
           row.meetingType,
           row.sectionLetter,
           row.sectionNumber);
 
-        currentSectionIndex = currentCourse.sectionList.length - 1;
-        currentSection = currentCourse.sectionList[currentSectionIndex];
-        currentSection.days = validate(row.days);
-        currentSection.time = validate(row.time);
-        currentSection.place = validate(row.place);
-        currentSection.instructor = validate(row.instructor);
-        currentSection.availability = validate(row.availability);
-        currentSection.limit = validate(row.limit);
+        var currentSectionIndex = currentCourse.sectionList.length - 1;
+        var currentSection = currentCourse.sectionList[currentSectionIndex];
+        currentSection.days = compact(row.days);
+        currentSection.time = compact(row.time);
+        currentSection.place = compact(row.place);
+        currentSection.instructor = compact(row.instructor);
+        currentSection.availability = compact(row.availability);
+        currentSection.limit = compact(row.limit);
         break;
 
       case "Course Note Header":
@@ -162,7 +162,8 @@ SearchResultPage.prototype._parseScheduleTable = function() {
  * [RowParser description]
  * @param {} row [description]
  */
-function RowParser($, row, prevRowType) {
+function RowParser(page, $, row, prevRowType) {
+  this.page = page;
   this.$ = $;
   this.row = $(row);
   this.prevRowType = prevRowType;
@@ -175,7 +176,7 @@ function RowParser($, row, prevRowType) {
   this.courseNumber = null;
   this.units = null;
   this.courseName = null;
-  this.restrictionCode = null;
+  this.restrictionCodes = null;
 
   // rowType = "Section"
   this.sectionId = null;
@@ -231,6 +232,7 @@ function RowParser($, row, prevRowType) {
  * col[11] - limit
  */
 RowParser.prototype._parseType = function() {
+  var ERROR_MESSAGE = "Error in parsing page " + this.page.getCurPage();
   var $ = this.$;
 
   // Check for department description and department header.
@@ -266,7 +268,7 @@ RowParser.prototype._parseType = function() {
         return;
 
       } else {
-        console.log('Something went wrong, perhaps the page format changed.');
+        console.log(ERROR_MESSAGE);
         return;
       }
     }
@@ -278,7 +280,7 @@ RowParser.prototype._parseType = function() {
         return;
 
       } else {
-        console.log('Something went wrong, perhaps the page format changed.');
+        console.log(ERROR_MESSAGE);
         return;
       }
     }
@@ -287,7 +289,7 @@ RowParser.prototype._parseType = function() {
     courseHeaderColumns = this.row.children('.crsheader');
     if (courseHeaderColumns.length == 4) {
       this.rowType = "Course Header";
-      this.restrictionCode = removeSpacing($(courseHeaderColumns[0]).text());
+      this.restrictionCodes = flattenSpaces(removeSpacing($(courseHeaderColumns[0]).text())).split(" ");
       this.courseNumber = removeSpacing($(courseHeaderColumns[1]).text());
 
       // Parse course name and units from text.
@@ -301,7 +303,7 @@ RowParser.prototype._parseType = function() {
         this.courseName = result[1];
         this.units = parseInt(result[2]);
       } else {
-        console.log('Something went wrong, perhaps the page format changed.');
+        console.log(ERROR_MESSAGE);
       }
     }
 
@@ -369,21 +371,50 @@ RowParser.prototype._parseType = function() {
 }
 
 function removeSpacing(text) {
+  if (text == null) {
+    return null;
+  }
   var re = /^\s*([^]*?)\s*$/;
   var result = re.exec(text);
   return result != null && result.length == 2 ? result[1] : "";
 }
 
+function flattenSpaces(text) {
+  if (text == null) {
+    return null;
+  }
+  var re = /(\n|\s|\r|\t)+/g;
+  return text.replace(re, " ");
+}
+
 /**
- * Validates the string, returning null if it's empty.
+ * Removes empty values of strings in array.
  * @param  {string} text
  * @return {text | null} null if empty, or else return original text.
  */
-function validate(text) {
-  if (typeof text === 'undefined' || text === "") {
+function compact(o) {
+  if (typeof o === 'undefined') {
     return null;
   }
-  return text
+  if (o === "") {
+    return null;
+  }
+
+  if (isArray(o)) {
+    for (var i = o.length - 1; i >= 0; i--) {
+      if (o[i] === "" || o[i] == null) {
+        o.splice(i,1);
+      }
+    }
+    if (o.length == 0) {
+      return null;
+    }
+  }
+  return o;
+}
+
+function isArray(o) {
+  return Object.prototype.toString.call(o) === '[object Array]';
 }
 
 module.exports = SearchResultPage;
