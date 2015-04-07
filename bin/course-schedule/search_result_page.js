@@ -269,6 +269,8 @@ RowParser.prototype._parseType = function() {
 
       } else {
         console.log(ERROR_MESSAGE);
+        console.log("Row:");
+        console.log(flattenSpaces(this.row.html()));
         return;
       }
     }
@@ -281,6 +283,8 @@ RowParser.prototype._parseType = function() {
 
       } else {
         console.log(ERROR_MESSAGE);
+        console.log("Row:");
+        console.log(flattenSpaces(this.row.html()));
         return;
       }
     }
@@ -295,8 +299,8 @@ RowParser.prototype._parseType = function() {
       // Parse course name and units from text.
       // Text looks something like:
       // "    Computer Organiz&Systms Progrm ( 4 Units)  "
-      var COURSE_TITLE_REGEX = /\s*(.+?)\s*\(\s*(\d+)\s*[Uu]nits?\s*\)/
-      var text = $(courseHeaderColumns[2]).text();
+      var COURSE_TITLE_REGEX = /\s*(.+?)\s*\(.*?(\d+)\s*[Uu]nits?\s*\)/
+      var text = flattenSpaces($(courseHeaderColumns[2]).text());
       var result = COURSE_TITLE_REGEX.exec(text);
 
       if (result != null && result.length == 3) {
@@ -304,6 +308,8 @@ RowParser.prototype._parseType = function() {
         this.units = parseInt(result[2]);
       } else {
         console.log(ERROR_MESSAGE);
+        console.log("Row:");
+        console.log(flattenSpaces(this.row.html()));
       }
     }
 
