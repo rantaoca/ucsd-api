@@ -20,19 +20,20 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.set('json spaces', 2);
 
 app.get('/api', function(req, res, next){
     var urlString = req.url;
-    var urlParse = url.parse(urlString, true);
+    var query = url.parse(urlString, true).query;
     console.log("Query");
-    console.log(urlParse.query);
-    
-    courseSearch(urlParse.query, function(err, data) {
+    console.log(query);
+
+    courseSearch(query, function(err, data) {
         if(err) {
-            console.log("ERRORORORORORO");
-            console.log(err);
+            console.log("Error: " + err.message);
+            res.json({"error":err.message});
             return;
-        } 
+        }
         res.json(data);
         console.log(data);
     });
