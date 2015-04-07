@@ -31,23 +31,22 @@ Course.prototype.addSection = function(sectionId, meetingType, sectionLetter, se
 //         "sectionList:" + sectionListJSON + "\n}";
 // }
 
-function Section(sectionId, meetingType, sectionLetter, sectionNumber,
-    days, time, place, instructor, availability, limit) {
+function Section(sectionId, meetingType, sectionLetter, sectionNumber) {
+    this.sectionId = null;
     this.meetingType = meetingType;
     this.sectionLetter = sectionLetter;
     this.sectionNumber = sectionNumber;
 
-    this.days = days;
-    this.time = time;
-    this.place = place;
-    this.instructor = instructor;
-    this.sectionId = sectionId;
+    this.days = null;
+    this.time = null;
+    this.place = null;
+    this.instructor = null;
 
     // Availability can be "Unlim" or "FULL waitlist(29)" or "29"
     // Waitlist is represented as negative availability.
-    this.availability = availability;
+    this.availability = null;
     // Limit can be nothing if availability is "Unlim"
-    this.limit = limit;
+    this.limit = null;
 }
 
 // Section.prototype.toJSON = function() {

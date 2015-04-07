@@ -20,6 +20,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.set('json replacer', function(key, val) {
+    return val != null? val : undefined;
+})
 app.set('json spaces', 2);
 
 app.get('/api', function(req, res, next){
@@ -65,7 +68,6 @@ if (app.get('env') === 'development') {
 // no stacktraces leaked to user
 app.use(function(err, req, res, next) {
     res.status(err.status || 500);
-    if(1==1) { return; }
     res.render('error', {
         message: err.message,
         error: {}

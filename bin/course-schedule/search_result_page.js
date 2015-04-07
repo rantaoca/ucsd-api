@@ -125,24 +125,27 @@ SearchResultPage.prototype._parseScheduleTable = function() {
           this.postData.selectedTerm,
           curDepartment,
           row.courseNumber,
-          row.units,
-          row.restrictionCode
+          validate(row.units),
+          validate(row.restrictionCode)
         );
         break;
 
       case "Section":
-        courseList[courseList.length - 1].addSection(
+        currentCourse = courseList[courseList.length - 1];
+        currentCourse.addSection(
           row.sectionId,
           row.meetingType,
           row.sectionLetter,
-          row.sectionNumber,
-          row.days,
-          row.time,
-          row.place,
-          row.instructor,
-          row.availability,
-          row.limit
-        );
+          row.sectionNumber);
+
+        currentSectionIndex = currentCourse.sectionList.length - 1;
+        currentSection = currentCourse.sectionList[currentSectionIndex];
+        currentSection.days = validate(row.days);
+        currentSection.time = validate(row.time);
+        currentSection.place = validate(row.place);
+        currentSection.instructor = validate(row.instructor);
+        currentSection.availability = validate(row.availability);
+        currentSection.limit = validate(row.limit);
         break;
 
       case "Course Note Header":
@@ -371,6 +374,16 @@ function removeSpacing(text) {
   return result != null && result.length == 2 ? result[1] : "";
 }
 
-
+/**
+ * Validates the string, returning null if it's empty.
+ * @param  {string} text
+ * @return {text | null} null if empty, or else return original text.
+ */
+function validate(text) {
+  if (typeof text === 'undefined' || text === "") {
+    return null;
+  }
+  return text
+}
 
 module.exports = SearchResultPage;
